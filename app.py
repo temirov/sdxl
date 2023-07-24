@@ -22,6 +22,7 @@ def main():
         width = gr.Slider(
             1024, 2048, step=16, value=1024, label=constants.UI_IMAGE_WIDTH_SLIDER_LABEL,
             info=constants.UI_IMAGE_SIZE_SLIDER_INFO)
+        # TODO: replace height with aspect ratio
         height = gr.Slider(
             1024, 2048, step=16, value=1024, label=constants.UI_IMAGE_HEIGHT_SLIDER_LABEL,
             info=constants.UI_IMAGE_SIZE_SLIDER_INFO)
@@ -44,6 +45,7 @@ def main():
                 label="Images", show_label=False, elem_id="gallery", height="auto", columns=4
             )
         )
+        # TODO: Add an ability to save a file (include prompt in the PNG info)
     sdxl.launch(server_name='0.0.0.0')
 
 
