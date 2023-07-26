@@ -7,4 +7,5 @@ torchvision
 transformers==4.31.0
 jupyter
 invisible-watermark
+xformers
 gradio

@@ -1,6 +1,7 @@
 SDXL_BASE_0_9_MODEL_PATH = "/home/tyemirov/Development/sdxl/models/stable-diffusion-xl-base-0.9"
 SDXL_REFINER_0_9_MODEL_PATH = "/home/tyemirov/Development/sdxl/models/stable-diffusion-xl-refiner-0.9"
 ONE_MINUTE = 60
+SERVER_NAME="0.0.0.0"
 
 UI_PAGE_TITLE = "SD XL 0.9"
 

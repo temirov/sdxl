@@ -4,6 +4,7 @@ from diffusers import DiffusionPipeline, DPMSolverMultistepScheduler
 import torch
 
 import constants
+from image_size import ImageSize
 from no_watermark import NoWatermark
 
 
@@ -72,8 +73,7 @@ class SdService:
             self,
             positive_prompt: str,
             negative_prompt: str,
-            height: int,
-            width: int,
+            image_size: ImageSize,
             num_inference_steps: int,
             total_results: int,
             seed: Optional[int] = None
@@ -86,8 +86,8 @@ class SdService:
                 generator,
                 positive_prompt,
                 negative_prompt,
-                height,
-                width,
+                image_size.height,
+                image_size.width,
                 num_inference_steps
             )
             images.append(image)
