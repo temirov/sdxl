@@ -5,10 +5,13 @@ import sys
 from typing import Tuple
 
 import gradio as gr
+from PIL import PngImagePlugin
 
 import constants
 from image_size import ImageSize
 from sd_service import SdService
+import PIL.Image as Image
+import uuid
 
 
 def get_image_sizes():
@@ -16,6 +19,15 @@ def get_image_sizes():
         ImageSize(width=1024, ratio=r) for r in ["1/1", "3/4", "2/3", "9/16"])
     image_sizes_horizontal: Tuple[ImageSize] = tuple(ImageSize(height=1024, ratio=r) for r in ["4/3", "3/2", "16/9"])
     return image_sizes_vertical + image_sizes_horizontal
+
+
+def save_img(imgs, index, prompt):
+    index = int(index)
+    png_info = PngImagePlugin.PngInfo()
+    png_info.add_text('parameters', prompt)
+    image = imgs[index]
+    image_name = uuid.uuid4().hex
+    image.save(f"{image_name}.png", pnginfo=png_info)
 
 
 def main():
@@ -52,6 +64,7 @@ def main():
         gallery = gr.Gallery(
             label="Images", show_label=False, elem_id="gallery", height="auto", columns=4
         )
+        generated_images = gr.State()
 
         render_btn.click(
             fn=sd_service.apply,
@@ -62,9 +75,18 @@ def main():
                 num_inference_steps,
                 total_results
             ],
-            outputs=[gallery]
+            outputs=[gallery, generated_images]
         )
-        # TODO: Add an ability to save a file (include prompt in the PNG info)
+        save_image_btn = gr.Button("Save selected image")
+        selected_index = gr.State()
+
+        def on_select(evt: gr.SelectData):
+            return evt.index
+
+        gallery.select(on_select, None, selected_index)
+
+        save_image_btn.click(save_img, [generated_images, selected_index, positive_prompt], None)
+
     sdxl.launch(server_name=constants.SERVER_NAME)
 
 

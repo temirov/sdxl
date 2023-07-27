@@ -92,4 +92,4 @@ class SdService:
             )
             images.append(image)
 
-        return images
+        return images, images
