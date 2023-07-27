@@ -11,9 +11,17 @@ from image_size import ImageSize
 from sd_service import SdService
 
 
+def get_image_sizes():
+    image_sizes_vertical: Tuple[ImageSize] = tuple(
+        ImageSize(width=1024, ratio=r) for r in ["1/1", "3/4", "2/3", "9/16"])
+    image_sizes_horizontal: Tuple[ImageSize] = tuple(ImageSize(height=1024, ratio=r) for r in ["4/3", "3/2", "16/9"])
+    return image_sizes_vertical + image_sizes_horizontal
+
+
 def main():
     sd_service = SdService()
-    image_sizes: Tuple[ImageSize] = tuple(ImageSize(width=1024, ratio=r) for r in ["1/1", "3/4", "2/3", "9/16"])
+
+    image_sizes = get_image_sizes()
 
     def get_image_size_by_index(index):
         return image_sizes[index]
@@ -40,6 +48,11 @@ def main():
 
                 render_btn = gr.Button(value=constants.UI_BUTTON_VALUE)
         size_index.change(fn=get_image_size_by_index, inputs=size_index, outputs=image_size_var)
+
+        gallery = gr.Gallery(
+            label="Images", show_label=False, elem_id="gallery", height="auto", columns=4
+        )
+
         render_btn.click(
             fn=sd_service.apply,
             inputs=[
@@ -49,9 +62,7 @@ def main():
                 num_inference_steps,
                 total_results
             ],
-            outputs=gr.Gallery(
-                label="Images", show_label=False, elem_id="gallery", height="auto", columns=4
-            )
+            outputs=[gallery]
         )
         # TODO: Add an ability to save a file (include prompt in the PNG info)
     sdxl.launch(server_name=constants.SERVER_NAME)
