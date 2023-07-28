@@ -2,6 +2,7 @@
 
 
 import sys
+import uuid
 from typing import Tuple
 
 import gradio as gr
@@ -9,15 +10,32 @@ from PIL import PngImagePlugin
 
 import constants
 from image_size import ImageSize
-from sd_service import SdService
-import PIL.Image as Image
-import uuid
+from sdxl_model import SdxlModel
+from sdxl_service import SdxlService
+
+
+def get_sdxl_models():
+    return {
+        "0.9": SdxlModel(
+            version="0.9",
+            base_model_path=constants.SDXL_BASE_0_9_MODEL_PATH,
+            refiner_model_path=constants.SDXL_REFINER_0_9_MODEL_PATH
+        ),
+        "1.0": SdxlModel(
+            version="1.0",
+            base_model_path=constants.SDXL_BASE_1_0_MODEL_PATH,
+            refiner_model_path=constants.SDXL_REFINER_1_0_MODEL_PATH
+        )
+    }
 
 
 def get_image_sizes():
     image_sizes_vertical: Tuple[ImageSize] = tuple(
-        ImageSize(width=1024, ratio=r) for r in ["1/1", "3/4", "2/3", "9/16"])
-    image_sizes_horizontal: Tuple[ImageSize] = tuple(ImageSize(height=1024, ratio=r) for r in ["4/3", "3/2", "16/9"])
+        ImageSize(width=1024, ratio=r) for r in ["1/1", "3/4", "2/3", "9/16"]
+    )
+    image_sizes_horizontal: Tuple[ImageSize] = tuple(
+        ImageSize(height=1024, ratio=r) for r in ["4/3", "3/2", "16/9"]
+    )
     return image_sizes_vertical + image_sizes_horizontal
 
 
@@ -31,14 +49,15 @@ def save_img(imgs, index, prompt):
 
 
 def main():
-    sd_service = SdService()
+    sdxl_models = get_sdxl_models()
+    sd_service = SdxlService(sdxl_models["1.0"])
 
     image_sizes = get_image_sizes()
 
     def get_image_size_by_index(index):
         return image_sizes[index]
 
-    with gr.Blocks(title=constants.UI_PAGE_TITLE) as sdxl:
+    with gr.Blocks(title=str(sdxl_models["1.0"])) as sdxl:
         image_size_var = gr.State(value=get_image_size_by_index(0))
         with gr.Row():
             positive_prompt = gr.Textbox(

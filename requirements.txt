@@ -2,10 +2,6 @@ accelerate
 diffusers
 safetensors
 torch
--i https://download.pytorch.org/whl/cu118
-torchvision
-transformers==4.31.0
-jupyter
+transformers
 invisible-watermark
-xformers
 gradio

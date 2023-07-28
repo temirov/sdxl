@@ -1,43 +1,47 @@
 from typing import Optional
 
-from diffusers import DiffusionPipeline, DPMSolverMultistepScheduler
 import torch
+from diffusers import DiffusionPipeline, DPMSolverMultistepScheduler
 
-import constants
 from image_size import ImageSize
 from no_watermark import NoWatermark
+from sdxl_model import SdxlModel
 
 
-class SdService:
-    def __init__(self):
+class SdxlService:
+    def __init__(self, sdxl_model: SdxlModel):
+        self.sdxl_model = sdxl_model
+        self.__post_init()
+
+    def __post_init(self):
         self.pipe = self.__get_base_model_pipe()
         self.refiner = self.__get_refiner_model_pipe()
 
-    @staticmethod
-    def __get_base_model_pipe():
+    def __get_base_model_pipe(self):
         pipe = DiffusionPipeline.from_pretrained(
-            constants.SDXL_BASE_0_9_MODEL_PATH,
+            self.sdxl_model.base_model_path,
             torch_dtype=torch.float16,
             variant="fp16",
             use_safetensors=True,
             local_files_only=True,
         )
         pipe.scheduler = DPMSolverMultistepScheduler.from_config(pipe.scheduler.config)
-        pipe.enable_model_cpu_offload()
+        pipe.unet = torch.compile(pipe.unet, mode="reduce-overhead", fullgraph=True)
         pipe.watermark = NoWatermark()
+        pipe.to("cuda")
         return pipe
 
-    @staticmethod
-    def __get_refiner_model_pipe():
+    def __get_refiner_model_pipe(self):
         refiner = DiffusionPipeline.from_pretrained(
-            constants.SDXL_REFINER_0_9_MODEL_PATH,
+            self.sdxl_model.refiner_model_path,
             torch_dtype=torch.float16,
             variant="fp16",
             use_safetensors=True,
             local_files_only=True,
         )
-        refiner.enable_model_cpu_offload()
+        refiner.unet = torch.compile(refiner.unet, mode="reduce-overhead", fullgraph=True)
         refiner.watermark = NoWatermark()
+        refiner.to("cuda")
         return refiner
 
     @staticmethod
