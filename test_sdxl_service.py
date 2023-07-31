@@ -15,6 +15,7 @@ class TestSdxlService(TestCase):
         self.num_inference_steps = 10
         self.total_results = 2
         self.seed = 123456
+        self.prompt_fidelity = 8.0
         self.image_size = ImageSize(width=1024)
         self.sdxl_model = SdxlModel(
             version="1.0",
@@ -35,6 +36,7 @@ class TestSdxlService(TestCase):
             self.negative_prompt,
             self.image_size,
             self.num_inference_steps,
+            self.prompt_fidelity,
             self.total_results,
         )
         self.assertEqual(self.total_results, len(images))

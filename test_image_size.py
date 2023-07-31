@@ -35,6 +35,18 @@ class TestImageSize(unittest.TestCase):
         actual = [str(image_size) for image_size in image_sizes]
         self.assertEqual(expected, actual)
 
+    def test_collection_by_height(self):
+        image_sizes: list[ImageSize] = [
+            ImageSize(width=1024, ratio="1/1"),
+            ImageSize(width=1152, ratio="5/4"),
+            ImageSize(width=1216, ratio="3/2"),
+            ImageSize(width=1344, ratio="16/9"),
+            ImageSize(width=1536, ratio="21/9")
+        ]
+        expected = ["1024x1024", "1368x1024", "1536x1024", "1824x1024"]
+        actual = [str(image_size) for image_size in image_sizes]
+        self.assertEqual(expected, actual)
+
 
 if __name__ == '__main__':
     unittest.main()
