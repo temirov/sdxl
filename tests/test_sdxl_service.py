@@ -38,5 +38,6 @@ class TestSdxlService(TestCase):
             self.num_inference_steps,
             self.prompt_fidelity,
             self.total_results,
+            self.seed
         )
         self.assertEqual(self.total_results, len(images))

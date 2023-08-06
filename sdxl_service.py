@@ -1,16 +1,12 @@
-from typing import Optional
+from typing import List, Tuple
 
 import torch
+from PIL.Image import Image
 from diffusers import DiffusionPipeline, DPMSolverMultistepScheduler
 
 from image_size import ImageSize
 from no_watermark import NoWatermark
 from sdxl_model import SdxlModel
-
-from PIL.Image import Image
-
-
-from typing import Dict, List, Tuple
 
 
 class SdxlService:
@@ -54,22 +50,18 @@ class SdxlService:
         return refiner
 
     @staticmethod
-    def __get_generator(seed: Optional[int]):
-        if seed is None:
-            generator = torch.Generator(device="cuda")
-        else:
-            generator = torch.Generator(device="cuda").manual_seed(seed)
-        return generator
+    def __get_generator(seed: int) -> torch.Generator:
+        return torch.Generator(device="cuda").manual_seed(seed)
 
     def __generate_image(
-        self,
-        generator,
-        prompt,
-        negative_prompt,
-        height,
-        width,
-        prompt_fidelity,
-        num_inference_steps,
+            self,
+            generator,
+            prompt,
+            negative_prompt,
+            height,
+            width,
+            prompt_fidelity,
+            num_inference_steps,
     ):
         latent_images = self.pipe(
             prompt=prompt,
@@ -87,14 +79,14 @@ class SdxlService:
         return image
 
     def apply(
-        self,
-        positive_prompt: str,
-        negative_prompt: str,
-        image_size: ImageSize,
-        num_inference_steps: int,
-        prompt_fidelity: float,
-        total_results: int,
-        seed: Optional[int] = None,
+            self,
+            positive_prompt: str,
+            negative_prompt: str,
+            image_size: ImageSize,
+            num_inference_steps: int,
+            prompt_fidelity: float,
+            total_results: int,
+            seed: int,
     ) -> Tuple[List[Image], List[Image]]:
         generator = self.__get_generator(seed)
         prompt_fidelity_float = float(prompt_fidelity)
@@ -112,4 +104,4 @@ class SdxlService:
             )
             images.append(image)
 
-        return (images, images)
+        return images, images
