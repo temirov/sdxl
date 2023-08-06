@@ -3,13 +3,15 @@ from fractions import Fraction
 
 class ImageSize:
     def __init__(self, width=None, height=None, ratio='1/1'):
-        self.ratio_fraction = Fraction(ratio)
+        self.ratio = ratio
+        self.ratio_fraction = Fraction(self.ratio)
         self.width = width
         self.height = height
         self.__post_init()
 
-    def __round_to_nearest_eight(self, n):
-        return round(n / 8) * 8
+    @staticmethod
+    def __round_to_nearest_eight(value: int) -> int:
+        return round(value / 8) * 8
 
     def __calculate_height(self):
         return self.width / self.ratio_fraction.numerator * self.ratio_fraction.denominator
@@ -25,5 +27,5 @@ class ImageSize:
         elif self.height is not None and self.width is None:
             self.width = self.__round_to_nearest_eight(self.__calculate_width())
 
-    def __repr__(self):
-        return f"{self.width}x{self.height} {self.ratio_fraction}"
+    def __repr__(self) -> str:
+        return f"{self.width}x{self.height} {self.ratio}"
