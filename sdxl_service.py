@@ -15,8 +15,13 @@ class SdxlService:
         self.__post_init()
 
     def __post_init(self):
+        self.device = self.__get_device()
         self.pipe = self.__get_base_model_pipe()
         self.refiner = self.__get_refiner_model_pipe(self.pipe)
+
+    @staticmethod
+    def __get_device():
+        return "cuda"
 
     def __get_base_model_pipe(self):
         pipe = DiffusionPipeline.from_pretrained(
@@ -29,7 +34,7 @@ class SdxlService:
         pipe.scheduler = DPMSolverMultistepScheduler.from_config(pipe.scheduler.config)
         pipe.unet = torch.compile(pipe.unet, mode="reduce-overhead", fullgraph=True)
         pipe.watermark = NoWatermark()
-        pipe.to("cuda")
+        pipe.to(self.device)
         return pipe
 
     def __get_refiner_model_pipe(self, base_model):
@@ -46,12 +51,11 @@ class SdxlService:
             refiner.unet, mode="reduce-overhead", fullgraph=True
         )
         refiner.watermark = NoWatermark()
-        refiner.to("cuda")
+        refiner.to(self.device)
         return refiner
 
-    @staticmethod
-    def __get_generator(seed: int) -> torch.Generator:
-        return torch.Generator(device="cuda").manual_seed(seed)
+    def __get_generator(self, seed: int) -> torch.Generator:
+        return torch.Generator(device=self.device).manual_seed(seed)
 
     def __generate_image(
             self,
@@ -74,7 +78,7 @@ class SdxlService:
             guidance_scale=prompt_fidelity,
         ).images
         image = self.refiner(
-            prompt=prompt, generator=generator, image=latent_images
+            prompt=prompt, generator=generator, image=latent_images, num_inference_steps=num_inference_steps,
         ).images[0]
         return image
 
