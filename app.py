@@ -1,98 +1,12 @@
 #!/usr/bin/env python3
-import configparser
-import json
-import random
-import uuid
-from pathlib import Path
-from typing import Dict, List, Tuple
 
 import gradio as gr
-from PIL import PngImagePlugin
-from PIL.Image import Image
 
 import constants
+from app_config import __save_configuration, __load_configuration
+from app_helper import save_img, get_sdxl_models, get_image_sizes, get_prompt_fidelities, get_seed, load_images
 from image_size import ImageSize
-from sdxl_model import SdxlModel
 from sdxl_service import SdxlService
-
-config = configparser.ConfigParser()
-
-
-def get_sdxl_models() -> Dict[str, SdxlModel]:
-    return {
-        "0.9": SdxlModel(
-            version="0.9",
-            base_model_path=constants.SDXL_BASE_0_9_MODEL_PATH,
-            refiner_model_path=constants.SDXL_REFINER_0_9_MODEL_PATH,
-        ),
-        "1.0": SdxlModel(
-            version="1.0",
-            base_model_path=constants.SDXL_BASE_1_0_MODEL_PATH,
-            refiner_model_path=constants.SDXL_REFINER_1_0_MODEL_PATH,
-        ),
-    }
-
-
-def __load_configuration() -> Tuple[str, str]:
-    config.read(constants.CONFIG_FILE)
-    folders_images = config['folders']['images']
-    return folders_images, folders_images
-
-
-def __save_configuration(save_image_path: str):
-    if 'folders' not in config:
-        config['folders'] = {}
-    config['folders']['images'] = save_image_path
-    with open(constants.CONFIG_FILE, 'w') as configfile:
-        config.write(configfile)
-
-
-def get_prompt_fidelities():
-    return [3, 5, 8, 13, 21, 30]
-
-
-def get_seed() -> int:
-    return random.randrange(10 ** 8, 10 ** 10)
-
-
-def get_image_sizes() -> List[ImageSize]:
-    # The ratios are taken from Dreamstudio
-    return [
-        ImageSize(width=1024, ratio="1/1"),
-        ImageSize(width=1152, height=896, ratio="5/4"),
-        ImageSize(width=1216, height=832, ratio="3/2"),
-        ImageSize(width=1536, height=640, ratio="21/9"),
-        ImageSize(width=1344, height=768, ratio="16/9"),
-        ImageSize(width=640, height=1536, ratio="9/21"),
-        ImageSize(width=768, height=1344, ratio="9/16"),
-    ]
-
-
-def save_img(
-        imgs: List[Image],
-        index: int,
-        prompt: str,
-        negative: str,
-        num_inference_steps: int,
-        prompt_fidelity: float,
-        seed: int,
-        folder_images_path: str):
-    png_info = PngImagePlugin.PngInfo()
-    meta = {
-        "prompt": prompt,
-        "negative": negative,
-        "inference_steps": num_inference_steps,
-        "prompt_fidelity": prompt_fidelity,
-        "seed": seed,
-    }
-    parameters = json.dumps(meta)
-    png_info.add_text("parameters", parameters)
-    index = int(index)
-    image = imgs[index]
-    image_name = uuid.uuid4().hex
-    Path(folder_images_path).mkdir(parents=True, exist_ok=True)
-    image.save(f"{folder_images_path}/{image_name}.png", pnginfo=png_info)
-
 
 sdxl_models = get_sdxl_models()
 sd_service = SdxlService(sdxl_models["1.0"])
@@ -191,6 +105,14 @@ with gr.Blocks(title=str(sdxl_models["1.0"]), theme=gr.themes.Soft()) as sdxl:
 
     with gr.Tab(constants.UI_PROCESS_TAB):
         gr.Textbox(constants.UI_PLACEHOLDER_LABEL)
+    with gr.Tab(constants.UI_GALLERY_TAB) as gallery_tab:
+        saved_images = gr.Gallery(
+            show_label=False,
+            height="auto",
+            columns=4,
+        )
+        gallery_images = gr.State()
+        gallery_tab.select(load_images, [folder_images_path], [saved_images, gallery_images])
     with gr.Tab(constants.UI_SETTINGS_TAB):
         folders_images_textbox = gr.Textbox(label=constants.UI_SAVE_IMAGE_PATH_LABEL)
         save_configuration_btn = gr.Button(constants.UI_SAVE_CONFIGURATION_BUTTON_VALUE)
@@ -206,5 +128,5 @@ with gr.Blocks(title=str(sdxl_models["1.0"]), theme=gr.themes.Soft()) as sdxl:
                    prompt_fidelity, seed, folder_images_path], None
     )
     if __name__ == "__main__":
-        sdxl.queue()
+        sdxl.queue()  # .queue() switches system to WebSockets which seem to be better supported
         sdxl.launch(server_name=constants.SERVER_NAME, debug=True)
