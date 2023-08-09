@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
+import configparser
 import json
 import random
 import uuid
-from typing import Dict, List
+from pathlib import Path
+from typing import Dict, List, Tuple
 
 import gradio as gr
 from PIL import PngImagePlugin
@@ -12,6 +14,8 @@ import constants
 from image_size import ImageSize
 from sdxl_model import SdxlModel
 from sdxl_service import SdxlService
+
+config = configparser.ConfigParser()
 
 
 def get_sdxl_models() -> Dict[str, SdxlModel]:
@@ -27,6 +31,20 @@ def get_sdxl_models() -> Dict[str, SdxlModel]:
             refiner_model_path=constants.SDXL_REFINER_1_0_MODEL_PATH,
         ),
     }
+
+
+def __load_configuration() -> Tuple[str, str]:
+    config.read(constants.CONFIG_FILE)
+    folders_images = config['folders']['images']
+    return folders_images, folders_images
+
+
+def __save_configuration(save_image_path: str):
+    if 'folders' not in config:
+        config['folders'] = {}
+    config['folders']['images'] = save_image_path
+    with open(constants.CONFIG_FILE, 'w') as configfile:
+        config.write(configfile)
 
 
 def get_prompt_fidelities():
@@ -52,12 +70,13 @@ def get_image_sizes() -> List[ImageSize]:
 
 def save_img(
         imgs: List[Image],
-        index: str,
+        index: int,
         prompt: str,
         negative: str,
         num_inference_steps: int,
         prompt_fidelity: float,
-        seed: int):
+        seed: int,
+        folder_images_path: str):
     png_info = PngImagePlugin.PngInfo()
     meta = {
         "prompt": prompt,
@@ -71,7 +90,8 @@ def save_img(
     index = int(index)
     image = imgs[index]
     image_name = uuid.uuid4().hex
-    image.save(f"{image_name}.png", pnginfo=png_info)
+    Path(folder_images_path).mkdir(parents=True, exist_ok=True)
+    image.save(f"{folder_images_path}/{image_name}.png", pnginfo=png_info)
 
 
 sdxl_models = get_sdxl_models()
@@ -81,6 +101,8 @@ image_sizes = get_image_sizes()
 prompt_fidelities = get_prompt_fidelities()
 
 with gr.Blocks(title=str(sdxl_models["1.0"]), theme=gr.themes.Soft()) as sdxl:
+    folder_images_path = gr.State()
+
     with gr.Tab(constants.UI_CREATE_TAB):
         with gr.Row():
             positive_prompt = gr.Textbox(label=constants.UI_IMAGE_DESCRIPTION_TEXTBOX_LABEL)
@@ -121,7 +143,7 @@ with gr.Blocks(title=str(sdxl_models["1.0"]), theme=gr.themes.Soft()) as sdxl:
                 )
                 seed = gr.Number(value=get_seed, precision=0, label=constants.UI_SEED_LABEL)
 
-                render_btn = gr.Button(value=constants.UI_BUTTON_VALUE)
+                render_btn = gr.Button(value=constants.UI_GENERATE_BUTTON_VALUE)
                 render_btn.click(fn=get_seed, inputs=None, outputs=seed)
 
 
@@ -137,9 +159,7 @@ with gr.Blocks(title=str(sdxl_models["1.0"]), theme=gr.themes.Soft()) as sdxl:
         )
 
         gallery = gr.Gallery(
-            label="Images",
             show_label=False,
-            elem_id="gallery",
             height="auto",
             columns=4,
         )
@@ -163,20 +183,28 @@ with gr.Blocks(title=str(sdxl_models["1.0"]), theme=gr.themes.Soft()) as sdxl:
         selected_index = gr.State()
 
 
-        def on_select(evt: gr.SelectData):
+        def get_select_index(evt: gr.SelectData):
             return evt.index
 
 
-        gallery.select(on_select, None, selected_index)
+        gallery.select(get_select_index, None, selected_index)
 
-        save_image_btn.click(
-            save_img, [generated_images, selected_index, positive_prompt, negative_prompt, num_inference_steps,
-                       prompt_fidelity, seed], None
-        )
     with gr.Tab(constants.UI_PROCESS_TAB):
         gr.Textbox(constants.UI_PLACEHOLDER_LABEL)
     with gr.Tab(constants.UI_SETTINGS_TAB):
-        gr.Textbox(constants.UI_SAVE_IMAGE_PATH_LABEL)
+        folders_images_textbox = gr.Textbox(label=constants.UI_SAVE_IMAGE_PATH_LABEL)
+        save_configuration_btn = gr.Button(constants.UI_SAVE_CONFIGURATION_BUTTON_VALUE)
+        save_configuration_btn.click(__save_configuration, [folders_images_textbox], None)
+        save_configuration_btn.click(
+            fn=lambda path: path, inputs=[folders_images_textbox], outputs=[folder_images_path]
+        )
 
-if __name__ == "__main__":
-    sdxl.launch(server_name=constants.SERVER_NAME)
+    sdxl.load(__load_configuration, None, [folders_images_textbox, folder_images_path])
+
+    save_image_btn.click(
+        save_img, [generated_images, selected_index, positive_prompt, negative_prompt, num_inference_steps,
+                   prompt_fidelity, seed, folder_images_path], None
+    )
+    if __name__ == "__main__":
+        sdxl.queue()
+        sdxl.launch(server_name=constants.SERVER_NAME, debug=True)
