@@ -2,12 +2,13 @@ import json
 import uuid
 from pathlib import Path
 import random
-from typing import List, Dict, Tuple
+from typing import List, Dict, Tuple, Union
 import PIL
 from PIL import PngImagePlugin
 from PIL.Image import Image
 
 import constants
+from c_n_model import CNModel
 from image_size import ImageSize
 from sdxl_model import SdxlModel
 
@@ -66,7 +67,7 @@ def get_image_sizes() -> List[ImageSize]:
     ]
 
 
-def get_sdxl_models() -> Dict[str, SdxlModel]:
+def get_sdxl_models() -> Dict[str, Union[SdxlModel, CNModel]]:
     return {
         "0.9": SdxlModel(
             version="0.9",
@@ -78,4 +79,9 @@ def get_sdxl_models() -> Dict[str, SdxlModel]:
             base_model_path=constants.SDXL_BASE_1_0_MODEL_PATH,
             refiner_model_path=constants.SDXL_REFINER_1_0_MODEL_PATH,
         ),
+        "canny": CNModel(
+            version="1.0",
+            description="Canny for SDXL",
+            model_path=constants.CN_CANNY_1_0_MODEL_PATH
+        )
     }

@@ -1,3 +1,4 @@
+CN_CANNY_1_0_MODEL_PATH = "/home/tyemirov/Development/sdxl/models/controlnet-canny-sdxl-1.0"
 SDXL_BASE_0_9_MODEL_PATH = "/home/tyemirov/Development/sdxl/models/stable-diffusion-xl-base-0.9"
 SDXL_REFINER_0_9_MODEL_PATH = "/home/tyemirov/Development/sdxl/models/stable-diffusion-xl-refiner-0.9"
 SDXL_BASE_1_0_MODEL_PATH = "/home/tyemirov/Development/sdxl/models/stable-diffusion-xl-base-1.0"
@@ -28,4 +29,7 @@ UI_TOTAL_RESULTS_SLIDER_LABEL = "Total results"
 
 CONFIG_FILE = 'config.ini'
 
+PROCESSING_HEADER = "## ControlNet"
 
+CANNY_DEFAULT_LOWER_THRESHOLD = 100
+CANNY_DEFAULT_UPPER_THRESHOLD = 200

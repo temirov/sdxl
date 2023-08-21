@@ -8,8 +8,8 @@ from sdxl_service import SdxlService
 
 class TestSdxlService(TestCase):
     def setUp(self) -> None:
-        self.positive_prompt = "Cartoon"
-        self.negative_prompt = "Astronaut playing guitar on the Moon"
+        self.positive_prompt = "Astronaut playing guitar on the Moon"
+        self.negative_prompt = "Cartoon"
         self.height = 1024
         self.width = 1024
         self.num_inference_steps = 10
