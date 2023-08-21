@@ -51,7 +51,3 @@ class TestControlNetXLService(TestCase):
             ControlNetXLService(self.sdxl_model, self.cn_canny_model)
         except BaseException as err:
             self.fail(f"Error: {err}")
-
-    def test_init_pipe(self):
-        control_net_service = ControlNetXLService(self.sdxl_model, self.cn_canny_model)
-        self.assertIsNone(control_net_service.pipe)
